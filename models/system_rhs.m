@@ -1,56 +1,48 @@
+function dx = system_rhs(t, x, clinical, params)
+V_la = x(1); V_lv = x(2); V_ra = x(3); V_rv = x(4);
+P_ao = x(5); Q_ao = x(6); P_as = x(7); Q_as = x(8); P_vs = x(9);
+P_po = x(10); Q_po = x(11); P_ap = x(12); Q_ap = x(13); P_vp = x(14);
 
-function dx = cv_ode(t,x,pt,p)
-% Cardiovascular ODE model (Bozkurt-style lumped parameter model)
+T = 60 / clinical.HR;
+tau = mod(t, T);
 
-Vla=x(1); Vlv=x(2); Vra=x(3); Vrv=x(4);
-pao=x(5); Qao=x(6);
-pas=x(7); Qas=x(8);
-pvs=x(9);
+E_v = elastance_ventricle(tau, T);
+T_atrial = 0.8 * T;
 
-ppo=x(10); Qpo=x(11);
-pap=x(12); Qap=x(13);
-pvp=x(14);
+E_la = elastance_atrium(tau, T, params.Emin_la, params.Emax_la, T_atrial, params.atrial_delay_la);
+E_ra = elastance_atrium(tau, T, params.Emin_ra, params.Emax_ra, T_atrial, params.atrial_delay_ra);
 
-T=60/pt.HR;
-tau=mod(t,T);
+P_lv = params.Ees_lv * (V_lv - params.V0_lv) * E_v + params.Alv * (exp(params.Blv * V_lv) - 1);
+P_rv = params.Ees_rv * (V_rv - params.V0_rv) * E_v + params.Arv * (exp(params.Brv * V_rv) - 1);
+P_la = E_la * (V_la - params.V0_la);
+P_ra = E_ra * (V_ra - params.V0_ra);
 
-T1=0.33*T; T2=0.45*T;
-fact=activation(tau,T,T1,T2);
+Q_mv = valve_flow(P_la, P_lv, params.Rmv_f, params.Rmv_b);
+Q_av = valve_flow(P_lv, P_ao, params.Rav_f, params.Rav_b);
+Q_tv = valve_flow(P_ra, P_rv, params.Rtv_f, params.Rtv_b);
+Q_pv = valve_flow(P_rv, P_po, params.Rpv_f, params.Rpv_b);
 
-plv=p.Ees_lv*(Vlv-p.V0_lv)*fact + p.Alv*(exp(p.Blv*Vlv)-1);
-prv=p.Ees_rv*(Vrv-p.V0_rv)*fact + p.Arv*(exp(p.Brv*Vrv)-1);
+Q_sv = (P_vs - P_ra) / params.Rvs;
+Q_vp = (P_vp - P_la) / params.Rvp;
 
-pla=p.Ela*(Vla-p.V0_la);
-pra=p.Era*(Vra-p.V0_ra);
+dV_la = Q_vp - Q_mv;
+dV_lv = Q_mv - Q_av;
+dV_ra = Q_sv - Q_tv;
+dV_rv = Q_tv - Q_pv;
 
-Qmv=max((pla-plv)/p.Rmv,0);
-Qav=max((plv-pao)/p.Rav,0);
-Qtv=max((pra-prv)/p.Rtv,0);
-Qpv=max((prv-ppo)/p.Rpv,0);
+dP_ao = (Q_av - Q_ao) / params.Cao;
+dQ_ao = (P_ao - P_as - params.Rao * Q_ao) / params.Lao;
 
-Qsv=(pvs-pra)/p.Rvs;
-Qvp=(pvp-pla)/p.Rvp;
+dP_as = (Q_ao - Q_as) / params.Cas;
+dQ_as = (P_as - P_vs - params.Ras * Q_as) / params.Las;
+dP_vs = (Q_as - Q_sv) / params.Cvs;
 
-dVla=Qvp-Qmv;
-dVlv=Qmv-Qav;
-dVra=Qsv-Qtv;
-dVrv=Qtv-Qpv;
+dP_po = (Q_pv - Q_po) / params.Cpo;
+dQ_po = (P_po - P_ap - params.Rpo * Q_po) / params.Lpo;
 
-dpao=(Qav-Qao)/p.Cao;
-dQao=(pao-pas-p.Rao*Qao)/p.Lao;
+dP_ap = (Q_po - Q_ap) / params.Cap;
+dQ_ap = (P_ap - P_vp - params.Rap * Q_ap) / params.Lap;
+dP_vp = (Q_ap - Q_vp) / params.Cvp;
 
-dpas=(Qao-Qas)/p.Cas;
-dQas=(pas-pvs-p.Ras*Qas)/p.Las;
-
-dpvs=(Qas-Qsv)/p.Cvs;
-
-dppo=(Qpv-Qpo)/p.Cpo;
-dQpo=(ppo-pap-p.Rpo*Qpo)/p.Lpo;
-
-dpap=(Qpo-Qap)/p.Cap;
-dQap=(pap-pvp-p.Rap*Qap)/p.Lap;
-
-dpvp=(Qap-Qvp)/p.Cvp;
-
-dx=[dVla;dVlv;dVra;dVrv;dpao;dQao;dpas;dQas;dpvs;dppo;dQpo;dpap;dQap;dpvp];
+dx = [dV_la; dV_lv; dV_ra; dV_rv; dP_ao; dQ_ao; dP_as; dQ_as; dP_vs; dP_po; dQ_po; dP_ap; dQ_ap; dP_vp];
 end

@@ -1,3 +1,2 @@
-
-ID,HR,LVEDV,LVESV,RVEDV,RVESV,MAP,CO,LVEDD,LVESD
-1,,,,,,,,,
+ID,label,model_id,HR,l_lv,l_rv,MAP,CO,Pao_sys,Pao_dias,V_lv_es,V_lv_ed,V_rv_es,V_rv_ed,D_lv_es,D_lv_ed,D_rv_es,D_rv_ed
+1,ExamplePatient,1,,,,,,,,,,,,,,,,

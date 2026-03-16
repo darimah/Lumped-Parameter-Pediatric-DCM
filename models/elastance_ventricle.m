@@ -1,11 +1,10 @@
-
-function f = activation(t,T,T1,T2)
-% Ventricular activation function (Bozkurt 2019)
-if t<T1
-f=(1-cos(pi*t/T1))/2;
-elseif t<T2
-f=(1+cos(pi*(t-T1)/(T2-T1)))/2;
+function e_t = elastance_ventricle(tau, T)
+T1 = 0.33*T; T2 = 0.45*T;
+if tau < T1
+    e_t = (1 - cos(pi * tau / T1)) / 2;
+elseif tau < T2
+    e_t = (1 + cos(pi * (tau - T1) / (T2 - T1))) / 2;
 else
-f=0;
+    e_t = 0;
 end
 end

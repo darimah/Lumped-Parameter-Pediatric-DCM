@@ -5,7 +5,7 @@ addpath(genpath(project_root));
 clinical = bozkurt2022_patient01_clinical();
 
 % Replace these with the real patient values later.
-clinical = add_tbv_ubv_to_clinical(clinical, 1.10, 'M', 0.50); % mengganti jadi UBV 50%
+clinical = add_tbv_ubv_to_clinical(clinical, 1.10, 'M', 0.70);
 
 fprintf('TBV = %.2f mL\n', clinical.TBV_ml);
 fprintf('UBV = %.2f mL\n', clinical.UBV_ml);
@@ -24,12 +24,11 @@ opts.make_plot = true;
 
 opts.solver_options = struct();
 opts.solver_options.tbv_init_settings = struct(); 
-% mengubah distribusi volume di bawah
-opts.solver_options.tbv_init_settings.frac_sven = 0.60;
-opts.solver_options.tbv_init_settings.frac_pven = 0.25;
-opts.solver_options.tbv_init_settings.frac_atria = 0.05;
-opts.solver_options.tbv_init_settings.frac_vent  = 0.05;
-opts.solver_options.tbv_init_settings.frac_art   = 0.05;
+opts.solver_options.tbv_init_settings = struct();
+opts.solver_options.tbv_init_settings.frac_sven = 0.45;
+opts.solver_options.tbv_init_settings.frac_pven = 0.18;
+opts.solver_options.tbv_init_settings.frac_atria = 0.07;
+opts.solver_options.tbv_init_settings.frac_vent  = 0.15;
 
 results = fit_patient_patternsearch_refined_tbv(clinical, opts);
 

@@ -1,4 +1,11 @@
 function results = fit_patient_patternsearch_v2_final(patient_id, options)
+% FINAL one-stage tuning on top of the best v2 workflow.
+%
+% Stage 0: warm start using fit_patient_patternsearch_refined
+% Stage 1: tune RV/pulmonary filling only
+%
+% Final result = Stage 1
+
 if nargin < 1
     patient_id = 1;
 end
@@ -12,7 +19,6 @@ if ~isfield(options, 'ps_mesh_tolerance'), options.ps_mesh_tolerance = 1e-4; end
 if ~isfield(options, 'ps_step_tolerance'), options.ps_step_tolerance = 1e-6; end
 if ~isfield(options, 'ps_function_tolerance'), options.ps_function_tolerance = 1e-6; end
 if ~isfield(options, 'ps_max_iterations_stage1'), options.ps_max_iterations_stage1 = 40; end
-if ~isfield(options, 'ps_max_iterations_stage2'), options.ps_max_iterations_stage2 = 30; end
 if ~isfield(options, 'ps_display'), options.ps_display = 'iter'; end
 if ~isfield(options, 'make_plot'), options.make_plot = true; end
 
@@ -31,6 +37,9 @@ else
     before_comparison = compare_model_vs_clinical(before_metrics, clinical);
 end
 
+% -------------------------------
+% Stage 1 only: RV/pulmonary tuning
+% -------------------------------
 stage1_names = {'Ees_rv','V0_rv','Rpo','Cpo','Rap','Cap','Rvp','Cvp'};
 
 bounds_stage1 = struct();
@@ -65,34 +74,11 @@ sim1 = integrate_system(clinical, params_stage1);
 metrics1 = compute_clinical_indices(sim1);
 comparison1 = compare_model_vs_clinical(metrics1, clinical);
 
-stage2_names = {'Krv'};
-bounds_stage2 = struct();
-bounds_stage2.Krv = struct('lb', 0.80, 'ub', 2.50);
-
-[x0_stage2, ~] = struct_to_vector(params_stage1, stage2_names);
-[lb2, ub2, stage2_names] = bounds_struct_to_vectors(bounds_stage2, stage2_names);
-
-obj2 = @(x) objective_rv_diameter_v2_vector(x, params_stage1, stage2_names, clinical);
-
-ps_opts2 = optimoptions('patternsearch', ...
-    'Display', options.ps_display, ...
-    'UseCompletePoll', true, ...
-    'UseCompleteSearch', false, ...
-    'UseParallel', options.ps_use_parallel, ...
-    'MeshTolerance', options.ps_mesh_tolerance, ...
-    'StepTolerance', options.ps_step_tolerance, ...
-    'FunctionTolerance', options.ps_function_tolerance, ...
-    'MaxIterations', options.ps_max_iterations_stage2);
-
-[xbest2, fval2, exitflag2, output2] = patternsearch(obj2, x0_stage2, [], [], [], [], lb2, ub2, [], ps_opts2);
-params_final = vector_to_struct(params_stage1, stage2_names, xbest2);
-
-sim2 = integrate_system(clinical, params_final);
-metrics2 = compute_clinical_indices(sim2);
-comparison2 = compare_model_vs_clinical(metrics2, clinical);
+severity1 = classify_dcm_severity(metrics1);
+disp(severity1.summary);
 
 if options.make_plot
-    plot_hemodynamics(sim2, metrics2);
+    plot_hemodynamics(sim1, metrics1);
 end
 
 results = struct();
@@ -106,6 +92,7 @@ results.before.comparison = before_comparison;
 
 results.stage1 = struct();
 results.stage1.params = params_stage1;
+results.stage1.sim = sim1;
 results.stage1.metrics = metrics1;
 results.stage1.comparison = comparison1;
 results.stage1.fval = fval1;
@@ -115,20 +102,9 @@ results.stage1.parameter_names = stage1_names;
 results.stage1.bounds.lb = lb1;
 results.stage1.bounds.ub = ub1;
 
-results.stage2 = struct();
-results.stage2.params = params_final;
-results.stage2.metrics = metrics2;
-results.stage2.comparison = comparison2;
-results.stage2.fval = fval2;
-results.stage2.exitflag = exitflag2;
-results.stage2.output = output2;
-results.stage2.parameter_names = stage2_names;
-results.stage2.bounds.lb = lb2;
-results.stage2.bounds.ub = ub2;
+% Final result = masuk ke label
+results.stage1.severity = severity1;
 
-results.final = struct();
-results.final.params = params_final;
-results.final.sim = sim2;
-results.final.metrics = metrics2;
-results.final.comparison = comparison2;
+results.final = results.stage1;
+results.final.severity = severity1;
 end

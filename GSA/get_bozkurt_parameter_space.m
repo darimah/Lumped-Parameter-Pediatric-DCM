@@ -1,41 +1,34 @@
-function pspace = get_bozkurt_parameter_space(patient_id, use_final_stage1)
+function pspace = get_bozkurt_parameter_space(patient_id, use_saved_final_mat)
 % GET_BOZKURT_PARAMETER_SPACE
 % Returns all Bozkurt model parameters, their baseline values, and bounds.
 %
-% This function is designed to work with the final project structure we
-% built in chat:
-%   - get_clinical_patient
-%   - default_parameters
-%   - get_parameter_bounds
-%   - fit_patient_patternsearch_v2_final
-%
-% INPUTS
-%   patient_id         : integer
-%   use_final_stage1   : logical, if true uses results.final.params as baseline
-%
-% OUTPUT
-%   pspace.names       : cell array of parameter names
-%   pspace.base        : baseline parameter struct
-%   pspace.base_vec    : baseline parameter vector
-%   pspace.lb          : lower bounds vector
-%   pspace.ub          : upper bounds vector
+% If use_saved_final_mat = true, this function loads the previously saved
+% final Stage-1 result instead of re-running the optimisation.
 
 if nargin < 1
     patient_id = 1;
 end
 if nargin < 2
-    use_final_stage1 = true;
+    use_saved_final_mat = true;
 end
 
 clinical = get_clinical_patient(patient_id);
 base_params = default_parameters(clinical.model_id);
 
-if use_final_stage1
-    try
-        fitted = fit_patient_patternsearch_v2_final(patient_id);
-        base_params = fitted.final.params;
-    catch ME
-        warning('Could not load final Stage-1 parameters. Falling back to default_parameters. Message: %s', ME.message);
+if use_saved_final_mat
+    project_root = fileparts(fileparts(mfilename('fullpath')));
+    mat_name = sprintf('patient%02d_results.mat', patient_id);
+    mat_path = fullfile(project_root, 'results', mat_name);
+
+    if exist(mat_path, 'file')
+        S = load(mat_path);
+        if isfield(S, 'results') && isfield(S.results, 'final') && isfield(S.results.final, 'params')
+            base_params = S.results.final.params;
+        else
+            warning('Saved MAT file found, but results.final.params not found. Using default parameters.');
+        end
+    else
+        warning('Saved final MAT file not found: %s. Using default parameters.', mat_path);
     end
 end
 

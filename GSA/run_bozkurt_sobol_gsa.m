@@ -3,9 +3,9 @@ clear; clc;
 project_root = fileparts(fileparts(mfilename('fullpath')));
 addpath(genpath(project_root));
 
-patient_id = 1;
+patient_id = 2; %ubah patient id di sini
 N_list = [64, 128];
-use_final_stage1 = true;
+use_final_stage1 = true;   % now means: use saved final MAT
 
 results_dir = fullfile(project_root, 'results');
 if ~exist(results_dir, 'dir')

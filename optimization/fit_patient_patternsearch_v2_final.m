@@ -24,7 +24,7 @@ if ~isfield(options, 'make_plot'), options.make_plot = true; end
 
 clinical = get_clinical_patient(patient_id);
 
-if options.run_warm_start
+if options.run_warm_start && isfield(clinical,'D_rv_ed') && isfield(clinical,'D_rv_es')
     warm = fit_patient_patternsearch_refined(patient_id);
     params0 = warm.params;
     before_metrics = warm.metrics;

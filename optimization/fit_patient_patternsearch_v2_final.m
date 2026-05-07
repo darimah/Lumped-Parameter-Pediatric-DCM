@@ -83,16 +83,16 @@ comparison1 = compare_model_vs_clinical(metrics1, clinical);
 severity1 = classify_dcm_severity(metrics1);
 
 % -------------------------------
-% Stage 2: tune Klv only
+% Stage 2: tune Klv and Krv
 % -------------------------------
-stage2_names = {'Klv'};
+stage2_names = {'Klv', 'Krv'};
 
 [x0_stage2, ~] = struct_to_vector(params_stage1, stage2_names);
 
 lb2 = max(0.5, 0.80 * params_stage1.Klv);
 ub2 = 1.20 * params_stage1.Klv;
 
-obj2 = @(x) objective_lv_diameter_only_vector(x, params_stage1, stage2_names, clinical);
+obj2 = @(x) objective_diameter_vector(x, params_stage1, stage2_names, clinical);
 
 ps_opts2 = optimoptions('patternsearch', ...
     'Display', options.ps_display, ...

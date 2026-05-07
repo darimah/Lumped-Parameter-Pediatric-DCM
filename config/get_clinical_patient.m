@@ -7,6 +7,6 @@ switch patient_id
     case 5, clinical = patient05_clinical();
     case 6, clinical = patient06_clinical();
     case 7, clinical = patient07_clinical();
-    otherwise, error('patient_id must be 1, 2, or 3');
+    otherwise, error('Unknown patient_id');
 end
 end

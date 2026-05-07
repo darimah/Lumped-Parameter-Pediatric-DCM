@@ -8,4 +8,5 @@ clinical.Pao_sys = 143; clinical.Pao_dias = 87;
 clinical.V_lv_es = 107; clinical.V_lv_ed = 151;
 clinical.V_rv_es = 84.9; clinical.V_rv_ed = 118.9;
 clinical.D_lv_es = 7.9; clinical.D_lv_ed = 8.5;
+clinical.D_rv_es = 3; clinical.D_rv_ed = 3.5;
 end
